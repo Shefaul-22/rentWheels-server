@@ -36,6 +36,7 @@ async function run() {
         const db = client.db('rentwheels-db');
         const usersCollection = db.collection('users')
         const carsCollection = db.collection('cars')
+        const bookingsCollection = db.collection("bookings");
 
 
         // Users related apis here
@@ -93,6 +94,53 @@ async function run() {
             } catch (error) {
                 console.error(error);
                 res.status(500).send({ message: "Failed to fetch car details" });
+            }
+        });
+
+        // Booking related api
+
+        app.post("/bookings", async (req, res) => {
+            try {
+                const { carId, userName, userEmail,location } = req.body;
+
+                // who book the car confirmation
+                if (!carId || !userName || !userEmail) {
+                    return res.send({ message: "Missing required fields" });
+                }
+
+                
+                const car = await carsCollection.findOne({ _id: new ObjectId(carId) });
+                if (!car) {
+                    return res.status(404).send({ message: "Car not found" });
+                }
+
+
+                if (car.status === "unavailable") {
+                    return res.send({ message: "Car already booked" });
+                }
+
+               
+
+                const booking = {
+                    carId: new ObjectId(carId),
+                    userName,
+                    userEmail,
+                    location,
+                    bookedAt: new Date(),
+                };
+                await bookingsCollection.insertOne(booking);
+
+                // update  car status available or not
+                await carsCollection.updateOne(
+                    { _id: new ObjectId(carId) },
+                    { $set: { status: "unavailable" } }
+                );
+
+                
+                return res.send({ success: true, message: "Car booked successfully" });
+            } catch (error) {
+                console.error(" Booking error:", error);
+                return res.status(500).send({ message: "Internal Server Error" });
             }
         });
 

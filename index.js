@@ -59,17 +59,25 @@ async function run() {
 
         })
 
+        // cars related apis 
         app.post('/cars', async (req, res) => {
             const newCar = req.body;
             const result = await carsCollection.insertOne(newCar);
             res.send(result);
         });
 
-        app.get('/cars', async(req, res) => {
-            const cursor = carsCollection.find(); 
+        app.get('/cars', async (req, res) => {
+            const cursor = carsCollection.find();
             const result = await cursor.toArray();
             res.send(result);
         })
+
+        app.get("/cars/newest", async (req, res) => {
+            const cursor = carsCollection.find().sort({ createdAt: -1 }).limit(6);
+            const newestCars = await cursor.toArray();
+
+            res.send(newestCars);
+        });
 
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });

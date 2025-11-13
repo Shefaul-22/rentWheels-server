@@ -3,7 +3,7 @@ const app = express();
 const cors = require('cors');
 // For hiding secrity key using dotenv
 require('dotenv').config();
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port = process.env.PORT || 3000;
 
 
@@ -72,11 +72,28 @@ async function run() {
             res.send(result);
         })
 
+
         app.get("/cars/newest", async (req, res) => {
             const cursor = carsCollection.find().sort({ createdAt: -1 }).limit(6);
             const newestCars = await cursor.toArray();
 
             res.send(newestCars);
+        });
+
+        app.get("/cars/:id", async (req, res) => {
+            try {
+                const id = req.params.id;
+                console.log(id)
+                const query = { _id: new ObjectId(id) }
+                const car = await carsCollection.findOne(query);
+                if (!car) {
+                    return res.status(404).send({ message: "Car not found" });
+                }
+                res.send(car);
+            } catch (error) {
+                console.error(error);
+                res.status(500).send({ message: "Failed to fetch car details" });
+            }
         });
 
         // Send a ping to confirm a successful connection

@@ -74,11 +74,20 @@ async function run() {
         })
 
 
+        // newest cars
         app.get("/cars/newest", async (req, res) => {
             const cursor = carsCollection.find().sort({ createdAt: -1 }).limit(6);
             const newestCars = await cursor.toArray();
 
             res.send(newestCars);
+        });
+
+        // browse all cars
+        app.get("/cars/browsecars", async (req, res) => {
+            const cursor = carsCollection.find().sort({ createdAt: -1 });
+            const result = await cursor.toArray();
+
+            res.send(result);
         });
 
         app.get("/cars/:id", async (req, res) => {
@@ -124,12 +133,23 @@ async function run() {
         app.delete("/cars/:id", async (req, res) => {
             const { id } = req.params;
 
+
+            const query = { _id: new ObjectId(id) }
+
+            // if (query) {
+            //     return res.status(400).send({ message: "Invalid car ID" });
+            // }
+
             if (!ObjectId.isValid(id)) {
                 return res.status(400).send({ message: "Invalid car ID" });
             }
 
+            
+
+
             try {
-                const result = await carsCollection.deleteOne({ _id: new ObjectId(id) });
+                
+                const result = await carsCollection.deleteOne(query);
                 if (result.deletedCount > 0) {
                     res.status(200).send({ message: "Car deleted successfully" });
                 } else {

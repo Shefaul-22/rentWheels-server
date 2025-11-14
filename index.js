@@ -81,6 +81,12 @@ async function run() {
 
             res.send(newestCars);
         });
+        app.get("/cars/topRatedCars", async (req, res) => {
+            const cursor = carsCollection.find().sort({ rentPrice: -1 }).limit(3);
+            const newestCars = await cursor.toArray();
+
+            res.send(newestCars);
+        });
 
         // browse all cars
         app.get("/cars/browsecars", async (req, res) => {

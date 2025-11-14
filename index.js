@@ -97,6 +97,50 @@ async function run() {
             }
         });
 
+        // Update car data api here
+
+        app.patch("/cars/:id", async (req, res) => {
+            const { id } = req.params;
+            const updateFields = req.body;
+
+            try {
+                const result = await carsCollection.updateOne(
+                    { _id: new ObjectId(id) },
+                    { $set: updateFields }
+                );
+
+                if (result.modifiedCount > 0) {
+                    res.status(200).send({ message: "Car updated successfully" });
+                } else {
+                    res.status(400).send({ message: "No changes made" });
+                }
+            } catch (err) {
+                console.error(err);
+                res.status(500).send({ message: "Update failed" });
+            }
+        });
+
+        // Delete a car from mylisting
+        app.delete("/cars/:id", async (req, res) => {
+            const { id } = req.params;
+
+            if (!ObjectId.isValid(id)) {
+                return res.status(400).send({ message: "Invalid car ID" });
+            }
+
+            try {
+                const result = await carsCollection.deleteOne({ _id: new ObjectId(id) });
+                if (result.deletedCount > 0) {
+                    res.status(200).send({ message: "Car deleted successfully" });
+                } else {
+                    res.status(404).send({ message: "Car not found" });
+                }
+            } catch (err) {
+                console.error(err);
+                res.status(500).send({ message: "Delete failed" });
+            }
+        });
+
         // Booking related api
 
         app.post("/bookings", async (req, res) => {
@@ -157,6 +201,7 @@ async function run() {
             res.send(result)
         })
 
+
         app.delete("/bookings/:id", async (req, res) => {
             try {
                 const bookingId = req.params.id;
@@ -195,6 +240,19 @@ async function run() {
                 });
             }
         });
+
+        // My listing related api
+        app.get("/myListing", async (req, res) => {
+            const email = req.query.email;
+            // console.log(email)
+            const query = {}
+            if (email) {
+                query.providerEmail = email;
+            }
+            const cursor = carsCollection.find(query);
+            const result = await cursor.toArray();
+            res.send(result)
+        })
 
 
         // Send a ping to confirm a successful connection

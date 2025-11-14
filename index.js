@@ -84,7 +84,7 @@ async function run() {
         app.get("/cars/:id", async (req, res) => {
             try {
                 const id = req.params.id;
-                console.log(id)
+                // console.log(id)
                 const query = { _id: new ObjectId(id) }
                 const car = await carsCollection.findOne(query);
                 if (!car) {
@@ -101,14 +101,14 @@ async function run() {
 
         app.post("/bookings", async (req, res) => {
             try {
-                const { carId, userName, userEmail,location } = req.body;
+                const { carId, userName, userEmail, location } = req.body;
 
                 // who book the car confirmation
                 if (!carId || !userName || !userEmail) {
                     return res.send({ message: "Missing required fields" });
                 }
 
-                
+
                 const car = await carsCollection.findOne({ _id: new ObjectId(carId) });
                 if (!car) {
                     return res.status(404).send({ message: "Car not found" });
@@ -119,7 +119,7 @@ async function run() {
                     return res.send({ message: "Car already booked" });
                 }
 
-               
+
 
                 const booking = {
                     carId: new ObjectId(carId),
@@ -136,13 +136,66 @@ async function run() {
                     { $set: { status: "unavailable" } }
                 );
 
-                
+
                 return res.send({ success: true, message: "Car booked successfully" });
             } catch (error) {
                 console.error(" Booking error:", error);
                 return res.status(500).send({ message: "Internal Server Error" });
             }
         });
+
+
+        app.get("/bookings", async (req, res) => {
+            const email = req.query.email;
+            // console.log(email)
+            const query = {}
+            if (email) {
+                query.userEmail = email;
+            }
+            const cursor = bookingsCollection.find(query)
+            const result = await cursor.toArray();
+            res.send(result)
+        })
+
+        app.delete("/bookings/:id", async (req, res) => {
+            try {
+                const bookingId = req.params.id;
+
+                // 1️⃣ Find the booking
+                const booking = await bookingsCollection.findOne({
+                    _id: new ObjectId(bookingId),
+                });
+
+                if (!booking) {
+                    return res.status(404).send({
+                        success: false,
+                        message: "Booking not found",
+                    });
+                }
+
+                // delete booking
+                await bookingsCollection.deleteOne({ _id: new ObjectId(bookingId) });
+
+                // Update car status to available
+                await carsCollection.updateOne(
+                    { _id: new ObjectId(booking.carId) },
+                    { $set: { status: "available" } }
+                );
+
+                res.status(200).send({
+                    success: true,
+                    message: "Booking cancelled successfully",
+                });
+
+            } catch (error) {
+                console.error(error);
+                res.status(500).send({
+                    success: false,
+                    message: "Failed to cancel booking",
+                });
+            }
+        });
+
 
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });

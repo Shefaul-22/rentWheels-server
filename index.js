@@ -81,11 +81,34 @@ async function run() {
 
             res.send(newestCars);
         });
+
+        // Top rated cars related api
         app.get("/cars/topRatedCars", async (req, res) => {
             const cursor = carsCollection.find().sort({ rentPrice: -1 }).limit(3);
             const newestCars = await cursor.toArray();
 
             res.send(newestCars);
+        });
+
+        // random cars for header
+        app.get("/cars/randomCars", async (req, res) => {
+            try {
+                const cars = await carsCollection.find().toArray();
+
+                if (cars.length <= 3) {
+                    return res.send(cars);
+                }
+
+                const randomCars = cars.sort(() => Math.random() - 0.5).slice(0, 15);
+
+                res.send(randomCars);
+
+            } catch (error) {
+                res.status(500).send({
+                    message: "Failed to load cars",
+                    error: error.message
+                });
+            }
         });
 
         // browse all cars
@@ -150,11 +173,11 @@ async function run() {
                 return res.status(400).send({ message: "Invalid car ID" });
             }
 
-            
+
 
 
             try {
-                
+
                 const result = await carsCollection.deleteOne(query);
                 if (result.deletedCount > 0) {
                     res.status(200).send({ message: "Car deleted successfully" });

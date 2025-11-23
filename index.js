@@ -76,7 +76,7 @@ async function run() {
 
         // newest cars
         app.get("/cars/newest", async (req, res) => {
-            const cursor = carsCollection.find().sort({ createdAt: -1 }).limit(6);
+            const cursor = carsCollection.find().sort({ createdAt: -1 });
             const newestCars = await cursor.toArray();
 
             res.send(newestCars);

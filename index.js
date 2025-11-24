@@ -6,6 +6,16 @@ require('dotenv').config();
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port = process.env.PORT || 5000;
 
+// Firebase admin
+const admin = require("firebase-admin");
+
+// index.js
+const decoded = Buffer.from(process.env.FIREBASE_SERVICE_KEY, "base64").toString("utf8");
+const serviceAccount = JSON.parse(decoded);
+
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+});
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@${process.env.DB_HOST}/?appName=crud-server-practices`;
 
@@ -22,6 +32,36 @@ const client = new MongoClient(uri, {
 app.use(cors())
 app.use(express.json())
 
+// verify firebase token
+const verifyFirebaseToken = async (req, res, next) => {
+    console.log('verify firebase token', req.headers.authorization)
+
+    if (!req.headers.authorization) {
+        
+        return res.status(401).send({ message: 'unauthorized access' })
+
+    }
+
+    const token = req.headers.authorization.split(' ')[1]
+    if (!token) {
+        return res.status(401).send({ message: 'unautorized access' })
+    }
+
+    // for verify token
+
+    try {
+        const userInfo = await admin.auth().verifyIdToken(token);
+        req.token_email = userInfo.email;
+        console.log('After token validation', userInfo)
+        next();
+    }
+    catch {
+        return res.status(401).send({ message: 'unautorized access' })
+    }
+
+    // 
+
+}
 
 app.get('/', (req, res) => {
     res.send("RentWheels server is running");
@@ -61,7 +101,7 @@ async function run() {
         })
 
         // cars related apis 
-        app.post('/cars', async (req, res) => {
+        app.post('/cars',verifyFirebaseToken, async (req, res) => {
 
             const newCar = req.body;
             const result = await carsCollection.insertOne(newCar);
@@ -138,7 +178,7 @@ async function run() {
 
         // Update car data api here
 
-        app.patch("/cars/:id", async (req, res) => {
+        app.patch("/cars/:id",verifyFirebaseToken, async (req, res) => {
             const { id } = req.params;
             const updateFields = req.body;
 
@@ -160,7 +200,7 @@ async function run() {
         });
 
         // Delete a car from mylisting
-        app.delete("/cars/:id", async (req, res) => {
+        app.delete("/cars/:id",verifyFirebaseToken, async (req, res) => {
             const { id } = req.params;
 
 
@@ -239,7 +279,7 @@ async function run() {
         });
 
 
-        app.get("/bookings", async (req, res) => {
+        app.get("/bookings",verifyFirebaseToken, async (req, res) => {
             const email = req.query.email;
             // console.log(email)
             const query = {}
@@ -252,7 +292,7 @@ async function run() {
         })
 
 
-        app.delete("/bookings/:id", async (req, res) => {
+        app.delete("/bookings/:id",verifyFirebaseToken, async (req, res) => {
             try {
                 const bookingId = req.params.id;
 
@@ -292,7 +332,7 @@ async function run() {
         });
 
         // My listing related api
-        app.get("/myListing", async (req, res) => {
+        app.get("/myListing",verifyFirebaseToken, async (req, res) => {
             const email = req.query.email;
             // console.log(email)
             const query = {}
@@ -315,7 +355,7 @@ async function run() {
     }
 }
 run().catch(console.dir);
-// 
+
 app.listen(port, () => {
-    console.log(`RentWheels server is running on port: ${port}`);
-})
+  console.log(`Server is running on port ${port}`);
+});

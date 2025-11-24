@@ -100,7 +100,7 @@ async function run() {
                     return res.send(cars);
                 }
 
-                const randomCars = cars.sort(() => Math.random() - 0.5).slice(0, 15);
+                const randomCars = cars.sort(() => Math.random() - 0.5);
 
                 res.send(randomCars);
 

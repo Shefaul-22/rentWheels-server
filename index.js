@@ -4,7 +4,7 @@ const cors = require('cors');
 // For hiding secrity key using dotenv
 require('dotenv').config();
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 5000;
 
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@${process.env.DB_HOST}/?appName=crud-server-practices`;
@@ -62,6 +62,7 @@ async function run() {
 
         // cars related apis 
         app.post('/cars', async (req, res) => {
+
             const newCar = req.body;
             const result = await carsCollection.insertOne(newCar);
             res.send(result);

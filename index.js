@@ -37,7 +37,7 @@ const verifyFirebaseToken = async (req, res, next) => {
     console.log('verify firebase token', req.headers.authorization)
 
     if (!req.headers.authorization) {
-        
+
         return res.status(401).send({ message: 'unauthorized access' })
 
     }
@@ -101,7 +101,7 @@ async function run() {
         })
 
         // cars related apis 
-        app.post('/cars',verifyFirebaseToken, async (req, res) => {
+        app.post('/cars', verifyFirebaseToken, async (req, res) => {
 
             const newCar = req.body;
             const result = await carsCollection.insertOne(newCar);
@@ -178,7 +178,7 @@ async function run() {
 
         // Update car data api here
 
-        app.patch("/cars/:id",verifyFirebaseToken, async (req, res) => {
+        app.patch("/cars/:id",  async (req, res) => {
             const { id } = req.params;
             const updateFields = req.body;
 
@@ -200,7 +200,7 @@ async function run() {
         });
 
         // Delete a car from mylisting
-        app.delete("/cars/:id",verifyFirebaseToken, async (req, res) => {
+        app.delete("/cars/:id",  async (req, res) => {
             const { id } = req.params;
 
 
@@ -279,7 +279,7 @@ async function run() {
         });
 
 
-        app.get("/bookings",verifyFirebaseToken, async (req, res) => {
+        app.get("/bookings", async (req, res) => {
             const email = req.query.email;
             // console.log(email)
             const query = {}
@@ -292,7 +292,7 @@ async function run() {
         })
 
 
-        app.delete("/bookings/:id",verifyFirebaseToken, async (req, res) => {
+        app.delete("/bookings/:id", verifyFirebaseToken, async (req, res) => {
             try {
                 const bookingId = req.params.id;
 
@@ -332,13 +332,15 @@ async function run() {
         });
 
         // My listing related api
-        app.get("/myListing",verifyFirebaseToken, async (req, res) => {
+        app.get("/myListing", verifyFirebaseToken, async (req, res) => {
             const email = req.query.email;
             // console.log(email)
             const query = {}
             if (email) {
                 query.providerEmail = email;
             }
+            
+
             const cursor = carsCollection.find(query);
             const result = await cursor.toArray();
             res.send(result)
@@ -357,5 +359,5 @@ async function run() {
 run().catch(console.dir);
 
 app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+    console.log(`Server is running on port ${port}`);
 });

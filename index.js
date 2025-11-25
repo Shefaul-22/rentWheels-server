@@ -34,18 +34,26 @@ app.use(express.json())
 
 // verify firebase token
 const verifyFirebaseToken = async (req, res, next) => {
-    console.log('verify firebase token', req.headers.authorization)
+    // console.log('verify firebase token', req.headers.authorization)
 
     if (!req.headers.authorization) {
-
-        return res.status(401).send({ message: 'unauthorized access' })
-
+        return res.status(401).send({
+            success: false,
+            message: 'Unauthorized access',
+            data: []
+        });
     }
 
     const token = req.headers.authorization.split(' ')[1]
+
     if (!token) {
-        return res.status(401).send({ message: 'unautorized access' })
+        return res.status(401).send({
+            success: false,
+            message: 'Unauthorized access',
+            data: []
+        });
     }
+
 
     // for verify token
 
@@ -176,9 +184,9 @@ async function run() {
             }
         });
 
-        // Update car data api here
+        // Update car data api here . car update on my listing
 
-        app.patch("/cars/:id",  async (req, res) => {
+        app.patch("/cars/:id", verifyFirebaseToken, async (req, res) => {
             const { id } = req.params;
             const updateFields = req.body;
 
@@ -200,7 +208,7 @@ async function run() {
         });
 
         // Delete a car from mylisting
-        app.delete("/cars/:id",  async (req, res) => {
+        app.delete("/cars/:id", verifyFirebaseToken, async (req, res) => {
             const { id } = req.params;
 
 
@@ -279,7 +287,7 @@ async function run() {
         });
 
 
-        app.get("/bookings", async (req, res) => {
+        app.get("/bookings", verifyFirebaseToken, async (req, res) => {
             const email = req.query.email;
             // console.log(email)
             const query = {}
@@ -295,6 +303,9 @@ async function run() {
         app.delete("/bookings/:id", verifyFirebaseToken, async (req, res) => {
             try {
                 const bookingId = req.params.id;
+
+                // console.log(bookingId);
+
 
                 // 1️⃣ Find the booking
                 const booking = await bookingsCollection.findOne({
@@ -339,7 +350,7 @@ async function run() {
             if (email) {
                 query.providerEmail = email;
             }
-            
+
 
             const cursor = carsCollection.find(query);
             const result = await cursor.toArray();
